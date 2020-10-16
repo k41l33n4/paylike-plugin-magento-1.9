@@ -8,6 +8,7 @@ $grand_total    = $this->helper( 'checkout/cart' )->getQuote()->getGrandTotal();
 $currency_code  = Mage::app()->getStore()->getCurrentCurrencyCode();
 $email          = $quote->getBillingAddress()->getEmail();
 $name           = $quote->getBillingAddress()->getName();
+
 if ( ! $email ) {
     $email = $quote->getCustomerEmail();
 }
@@ -50,6 +51,7 @@ if ( Mage::getStoreConfig( 'payment/paylike/status' ) ) {
             email: '<?php echo $email; ?>',
             name: '<?php echo $name; ?>',
             amountpaylike:<?php echo $currencies->ceil( $grand_total, $currency_code ) ?>};
+
         var payment_method_desc = '<?php echo $paylike_helper->getPaymentMethodDescription(); ?>';
         var payment_method_caredit_card_logos = '<?php echo $paylike_helper->getCreditCardLogos( true ); ?>';
         var payment_method_title = jQuery('#p_method_paylike').parents('dt').find('label[for="p_method_paylike"]').text().replace(/^\s+|\s+$/g, '');
@@ -173,6 +175,24 @@ if ( Mage::getStoreConfig( 'payment/paylike/status' ) ) {
                 if (publicKey) {
                     var paylike = Paylike(publicKey);
                     document.getElementById("paylike-transaction-id").removeAttribute("disabled");
+
+                    if (!paylikeVAR.name || !paylikeVAR.name.trim()) {
+                      var fname = document.querySelector("input[name=\"billing[firstname]\"]").value;
+                      var mname = document.querySelector("input[name=\"billing[middlename]\"]").value;
+                      var lname = document.querySelector("input[name=\"billing[lastname]\"]").value;
+                      paylikeVAR.name = [fname, mname, lname].filter(function(n) {
+                        return !!n;
+                      }).join(" ");
+                    }
+
+                    if (!paylikeVAR.email || !paylikeVAR.email.trim()) {
+                        paylikeVAR.email = document.querySelector("input[name=\"billing[email]\"]").value;
+                    }
+
+                    if (!paylikeVAR.telephone || !paylikeVAR.telephone.trim()) {
+                        paylikeVAR.telephone = document.querySelector("input[name=\"billing[telephone]\"]").value;
+                    }
+
                     var args = {
                         title: popupTitle,
                         currency: currency,
@@ -195,6 +215,8 @@ if ( Mage::getStoreConfig( 'payment/paylike/status' ) ) {
                             paylikePluginVersion: version
                         }
                     };
+
+                    console.log(args);
                     if (typeof window.oscPlaceOrder === 'function') {
                         args.custom.ecommerce = {
                             name: 'OneStepCheckout',
